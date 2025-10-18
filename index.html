@@ -1,0 +1,1904 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>赛博算命 - iOS App原型</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        cyber: {
+                            primary: '#00FFFF',
+                            secondary: '#FF00FF',
+                            accent: '#FFD700',
+                            dark: '#0F1021',
+                            darker: '#0A0B16',
+                            light: '#8A8FA3',
+                            overlay: 'rgba(15, 16, 33, 0.8)'
+                        },
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                    boxShadow: {
+                        'cyber': '0 0 15px rgba(0, 255, 255, 0.5), 0 0 30px rgba(0, 255, 255, 0.3)',
+                        'cyber-pink': '0 0 15px rgba(255, 0, 255, 0.5), 0 0 30px rgba(255, 0, 255, 0.3)',
+                        'cyber-yellow': '0 0 15px rgba(255, 215, 0, 0.5), 0 0 30px rgba(255, 215, 0, 0.3)',
+                    },
+                    animation: {
+                        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        'float': 'float 3s ease-in-out infinite',
+                        'glow': 'glow 2s ease-in-out infinite alternate',
+                        'scan': 'scan 4s ease-in-out infinite',
+                    },
+                    keyframes: {
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-10px)' },
+                        },
+                        glow: {
+                            '0%': { boxShadow: '0 0 5px rgba(0, 255, 255, 0.5)' },
+                            '100%': { boxShadow: '0 0 20px rgba(0, 255, 255, 0.8), 0 0 30px rgba(0, 255, 255, 0.6)' },
+                        },
+                        scan: {
+                            '0%': { backgroundPosition: '0% 0%' },
+                            '100%': { backgroundPosition: '0% 100%' },
+                        },
+                        shake: {
+                            '0%, 100%': { transform: 'translateX(0)' },
+                            '25%': { transform: 'translateX(-5px)' },
+                            '75%': { transform: 'translateX(5px)' },
+                        }
+                    },
+                },
+            }
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+            .text-shadow {
+                text-shadow: 0 0 10px rgba(0, 255, 255, 0.7);
+            }
+            .text-shadow-pink {
+                text-shadow: 0 0 10px rgba(255, 0, 255, 0.7);
+            }
+            .bg-grid {
+                background-image: radial-gradient(rgba(0, 255, 255, 0.15) 1px, transparent 1px);
+                background-size: 30px 30px;
+            }
+            .glass {
+                backdrop-filter: blur(8px);
+                background-color: rgba(15, 16, 33, 0.7);
+            }
+            .scan-line {
+                background: linear-gradient(to bottom, 
+                    rgba(255, 255, 255, 0) 0%,
+                    rgba(255, 255, 255, 0.1) 50%,
+                    rgba(255, 255, 255, 0) 100%);
+                background-size: 100% 4px;
+                animation: scan 4s linear infinite;
+            }
+            .iphone-frame {
+                width: 393px;
+                height: 852px;
+                border-radius: 44px;
+                position: relative;
+                overflow: hidden;
+            }
+            .status-bar {
+                height: 50px;
+            }
+            .bottom-indicator {
+                height: 34px;
+            }
+            .tab-bar {
+                height: 49px;
+                position: sticky;
+                bottom: 0;
+                z-index: 100;
+            }
+            
+            .animate-shake {
+                animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
+            }
+            
+            /* 自定义滚动条样式 - 赛博朋克风格 */
+            ::-webkit-scrollbar {
+                width: 6px;
+                height: 6px;
+            }
+            
+            ::-webkit-scrollbar-track {
+                background: rgba(10, 11, 22, 0.8);
+                border-radius: 3px;
+            }
+            
+            ::-webkit-scrollbar-thumb {
+                background: linear-gradient(to bottom, #00FFFF, #FF00FF);
+                border-radius: 3px;
+                box-shadow: 0 0 10px rgba(0, 255, 255, 0.7);
+            }
+            
+            ::-webkit-scrollbar-thumb:hover {
+                background: linear-gradient(to bottom, #00FFFF, #FF00FF);
+                box-shadow: 0 0 15px rgba(0, 255, 255, 0.9), 0 0 30px rgba(0, 255, 255, 0.6);
+            }
+            
+            /* 为Firefox添加滚动条样式 */
+            * {
+                scrollbar-width: thin;
+                scrollbar-color: rgba(0, 255, 255, 0.8) rgba(10, 11, 22, 0.8);
+            }
+        }
+    </style>
+</head>
+<body class="bg-black text-white font-sans flex flex-col items-center justify-center min-h-screen">
+    <!-- iOS设备框架 -->
+    <div class="iphone-frame bg-cyber-darker border-4 border-cyber-light relative mx-auto my-8">
+        <!-- 状态栏 -->
+        <div class="status-bar glass flex items-center justify-between px-4 text-xs">
+            <span>20:42</span>
+            <div class="flex items-center space-x-1">
+                <i class="fa fa-signal"></i>
+                <i class="fa fa-wifi"></i>
+                <i class="fa fa-battery-three-quarters"></i>
+            </div>
+        </div>
+
+        <!-- 应用容器 - 所有页面都在这里 -->
+        <div class="app-container h-[calc(100%-133px)] overflow-hidden relative">
+            <!-- 主页面 -->
+            <div id="home-page" class="page h-full flex flex-col">
+                <!-- 头部 -->
+                <header class="p-4 border-b border-cyber-primary/30">
+                    <h1 class="text-[clamp(1.5rem,5vw,2rem)] font-bold text-center text-cyber-primary text-shadow">
+                        赛博算命
+                    </h1>
+                    <p class="text-xs text-center text-cyber-light mt-1">未来已来，命运可算</p>
+                </header>
+
+                <!-- 主要内容 -->
+                <main class="flex-1 p-4 overflow-y-auto bg-grid">
+                    <!-- 用户信息卡片 -->
+                    <div class="user-card glass rounded-xl p-4 mb-6 border border-cyber-primary/30">
+                        <div class="flex items-center">
+                            <div class="w-16 h-16 rounded-full bg-gradient-to-br from-cyber-primary to-cyber-secondary flex items-center justify-center">
+                                <i class="fa fa-user text-2xl text-cyber-darker"></i>
+                            </div>
+                            <div class="ml-4">
+                                <p class="text-sm text-cyber-light">访客</p>
+                                <p class="text-xs text-cyber-light/70">点击登录解锁更多功能</p>
+                            </div>
+                            <button id="login-btn" class="ml-auto px-3 py-1 text-xs rounded-full bg-cyber-primary text-cyber-darker font-medium">
+                                登录
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 推荐服务 -->
+                    <section class="mb-6">
+                        <h2 class="text-base font-semibold mb-3 flex items-center">
+                            <i class="fa fa-star text-cyber-accent mr-2"></i>
+                            热门测算
+                        </h2>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div class="service-card glass rounded-xl p-3 border border-cyber-primary/30 hover:shadow-cyber transition-all duration-300 cursor-pointer relative overflow-hidden group">
+                                <div class="absolute inset-0 bg-gradient-to-br from-cyber-primary/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                                <h3 class="text-sm font-medium">今日运势</h3>
+                                <p class="text-xs text-cyber-light mt-1">每日更新，精准预测</p>
+                                <div class="mt-2 flex justify-between items-center">
+                                    <span class="text-xs bg-cyber-primary/20 text-cyber-primary px-2 py-0.5 rounded">免费</span>
+                                    <i class="fa fa-arrow-right text-cyber-light/50 text-xs"></i>
+                                </div>
+                            </div>
+                            <div class="service-card glass rounded-xl p-3 border border-cyber-secondary/30 hover:shadow-cyber-pink transition-all duration-300 cursor-pointer relative overflow-hidden group">
+                                <div class="absolute inset-0 bg-gradient-to-br from-cyber-secondary/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                                <h3 class="text-sm font-medium">性格分析</h3>
+                                <p class="text-xs text-cyber-light mt-1">深入剖析你的性格特质</p>
+                                <div class="mt-2 flex justify-between items-center">
+                                    <span class="text-xs bg-cyber-secondary/20 text-cyber-secondary px-2 py-0.5 rounded">付费</span>
+                                    <i class="fa fa-arrow-right text-cyber-light/50 text-xs"></i>
+                                </div>
+                            </div>
+                            <div class="service-card glass rounded-xl p-3 border border-cyber-accent/30 hover:shadow-cyber-yellow transition-all duration-300 cursor-pointer relative overflow-hidden group">
+                                <div class="absolute inset-0 bg-gradient-to-br from-cyber-accent/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                                <h3 class="text-sm font-medium">爱情运势</h3>
+                                <p class="text-xs text-cyber-light mt-1">解析你的感情发展趋势</p>
+                                <div class="mt-2 flex justify-between items-center">
+                                    <span class="text-xs bg-cyber-accent/20 text-cyber-accent px-2 py-0.5 rounded">付费</span>
+                                    <i class="fa fa-arrow-right text-cyber-light/50 text-xs"></i>
+                                </div>
+                            </div>
+                            <div class="service-card glass rounded-xl p-3 border border-cyber-primary/30 hover:shadow-cyber transition-all duration-300 cursor-pointer relative overflow-hidden group">
+                                <div class="absolute inset-0 bg-gradient-to-br from-cyber-primary/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                                <h3 class="text-sm font-medium">事业财运</h3>
+                                <p class="text-xs text-cyber-light mt-1">预测职业与财富走向</p>
+                                <div class="mt-2 flex justify-between items-center">
+                                    <span class="text-xs bg-cyber-primary/20 text-cyber-primary px-2 py-0.5 rounded">付费</span>
+                                    <i class="fa fa-arrow-right text-cyber-light/50 text-xs"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- 今日运势预览 -->
+                    <section class="mb-6">
+                        <div class="glass rounded-xl p-4 border border-cyber-primary/30 hover:shadow-cyber transition-all duration-300 cursor-pointer">
+                            <h2 class="text-base font-semibold mb-3 flex items-center">
+                                <i class="fa fa-bolt text-cyber-primary mr-2"></i>
+                                今日速览
+                            </h2>
+                            <div class="flex justify-between items-center">
+                                <div>
+                                    <p class="text-sm">整体运势</p>
+                                    <div class="flex mt-1">
+                                        <i class="fa fa-circle text-cyber-accent text-xs"></i>
+                                        <i class="fa fa-circle text-cyber-accent text-xs mx-1"></i>
+                                        <i class="fa fa-circle text-cyber-accent text-xs"></i>
+                                        <i class="fa fa-circle text-cyber-light/30 text-xs mx-1"></i>
+                                        <i class="fa fa-circle text-cyber-light/30 text-xs"></i>
+                                    </div>
+                                </div>
+                                <div class="text-right">
+                                    <p class="text-sm">幸运数字</p>
+                                    <p class="text-cyber-primary font-medium">7</p>
+                                </div>
+                                <div class="text-right">
+                                    <p class="text-sm">幸运颜色</p>
+                                    <p class="text-cyber-secondary font-medium">紫色</p>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- 神秘预言 -->
+                    <section>
+                        <div class="glass rounded-xl p-4 border border-cyber-secondary/30">
+                            <h2 class="text-base font-semibold mb-3 flex items-center">
+                                <i class="fa fa-quote-left text-cyber-secondary mr-2"></i>
+                                神秘预言
+                            </h2>
+                            <p class="text-sm italic text-cyber-light">
+                                "数据流中隐藏着你的未来，算法将为你指明方向。当蓝色光芒闪耀时，机遇即将降临。"
+                            </p>
+                            <div class="mt-3 text-right">
+                                <p class="text-xs text-cyber-secondary/70">— 赛博先知</p>
+                            </div>
+                        </div>
+                    </section>
+                </main>
+
+
+            </div>
+
+            <!-- 登录页面 -->
+            <div id="login-page" class="page h-full flex flex-col hidden">
+                <!-- 头部 -->
+                <header class="p-4 border-b border-cyber-primary/30 flex items-center">
+                    <button id="back-from-login" class="text-cyber-primary mr-4">
+                            <i class="fa fa-arrow-left"></i>
+                        </button>
+                    <h1 class="text-lg font-bold text-cyber-primary">账号登录</h1>
+                </header>
+
+                <!-- 主要内容 -->
+                <main class="flex-1 p-6 flex flex-col justify-center bg-grid">
+                    <div class="w-full max-w-xs mx-auto">
+                        <div class="text-center mb-10">
+                            <h2 class="text-2xl font-bold text-cyber-primary text-shadow">赛博算命</h2>
+                            <p class="text-xs text-cyber-light mt-2">连接数字世界的命运之桥</p>
+                        </div>
+
+                        <div class="glass rounded-xl p-6 border border-cyber-primary/30">
+                            <div class="mb-4">
+                                <label class="block text-xs text-cyber-light mb-1">手机号</label>
+                                <input id="phone-input" type="tel" placeholder="请输入手机号" class="w-full bg-cyber-darker/50 border border-cyber-primary/30 rounded-lg p-3 text-sm focus:outline-none focus:border-cyber-primary transition-all duration-300 group-hover:border-cyber-primary/60">
+                            </div>
+                            <div class="mb-6">
+                                <label class="block text-xs text-cyber-light mb-1">验证码</label>
+                                <div class="flex items-center">
+                                    <input id="code-input" type="text" placeholder="请输入验证码" class="flex-1 bg-cyber-darker/50 border border-cyber-primary/30 rounded-lg p-3 text-sm focus:outline-none focus:border-cyber-primary transition-all duration-300 group-hover:border-cyber-primary/60">
+                                    <button id="get-code-btn" class="ml-2 px-3 py-1 text-xs rounded-lg bg-cyber-primary/20 text-cyber-primary hover:bg-cyber-primary/30 transition-all duration-300 active:scale-95">
+                                        获取验证码
+                                    </button>
+                                </div>
+                            </div>
+                            <button id="submit-login-btn" class="w-full py-3 rounded-lg bg-gradient-to-r from-cyber-primary to-cyber-secondary text-cyber-darker font-medium mb-4 hover:shadow-cyber transition-all duration-300 active:scale-98">
+                                登录 / 注册
+                            </button>
+                            <p class="text-xs text-center text-cyber-light/70">
+                                登录即表示同意<a href="#" class="text-cyber-primary">《用户协议》</a>和<a href="#" class="text-cyber-primary">《隐私政策》</a>
+                            </p>
+                        </div>
+
+                        <div class="mt-8 text-center">
+                            <p class="text-xs text-cyber-light/70 mb-4">其他登录方式</p>
+                            <div class="flex justify-center space-x-8">
+                                <button class="w-10 h-10 rounded-full glass border border-cyber-primary/30 flex items-center justify-center hover:shadow-cyber transition-all duration-300">
+                                    <i class="fa fa-weixin text-cyber-accent"></i>
+                                </button>
+                                <button class="w-10 h-10 rounded-full glass border border-cyber-primary/30 flex items-center justify-center hover:shadow-cyber transition-all duration-300">
+                                    <i class="fa fa-apple text-white"></i>
+                                </button>
+                                <button class="w-10 h-10 rounded-full glass border border-cyber-primary/30 flex items-center justify-center hover:shadow-cyber transition-all duration-300">
+                                    <i class="fa fa-weibo text-red-500"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </main>
+            </div>
+
+            <!-- 今日运势页面 -->
+            <div id="today-fortune-page" class="page h-full flex flex-col hidden">
+                <!-- 头部 -->
+                <header class="p-4 border-b border-cyber-primary/30 flex items-center">
+                    <button id="back-from-today-fortune" class="text-cyber-primary mr-4">
+                            <i class="fa fa-arrow-left"></i>
+                        </button>
+                    <h1 class="text-lg font-bold text-cyber-primary">今日运势</h1>
+                </header>
+
+                <!-- 主要内容 -->
+                <main class="flex-1 p-4 overflow-y-auto bg-grid">
+                    <div class="glass rounded-xl p-4 border border-cyber-primary/30 mb-6">
+                        <div class="text-center mb-4">
+                            <h2 class="text-xl font-bold text-cyber-primary text-shadow">2024年6月15日</h2>
+                            <p class="text-sm text-cyber-light">星期六 · 双子座</p>
+                        </div>
+
+                        <div class="flex justify-around mb-6">
+                            <div class="text-center">
+                                <p class="text-xs text-cyber-light mb-1">整体运势</p>
+                                <div class="flex justify-center">
+                                    <i class="fa fa-circle text-cyber-accent text-xs"></i>
+                                    <i class="fa fa-circle text-cyber-accent text-xs mx-1"></i>
+                                    <i class="fa fa-circle text-cyber-accent text-xs"></i>
+                                    <i class="fa fa-circle text-cyber-light/30 text-xs mx-1"></i>
+                                    <i class="fa fa-circle text-cyber-light/30 text-xs"></i>
+                                </div>
+                            </div>
+                            <div class="text-center">
+                                <p class="text-xs text-cyber-light mb-1">爱情运势</p>
+                                <div class="flex justify-center">
+                                    <i class="fa fa-circle text-cyber-accent text-xs"></i>
+                                    <i class="fa fa-circle text-cyber-accent text-xs mx-1"></i>
+                                    <i class="fa fa-circle text-cyber-accent text-xs"></i>
+                                    <i class="fa fa-circle text-cyber-accent text-xs mx-1"></i>
+                                    <i class="fa fa-circle text-cyber-light/30 text-xs"></i>
+                                </div>
+                            </div>
+                            <div class="text-center">
+                                <p class="text-xs text-cyber-light mb-1">事业运势</p>
+                                <div class="flex justify-center">
+                                    <i class="fa fa-circle text-cyber-accent text-xs"></i>
+                                    <i class="fa fa-circle text-cyber-accent text-xs mx-1"></i>
+                                    <i class="fa fa-circle text-cyber-light/30 text-xs"></i>
+                                    <i class="fa fa-circle text-cyber-light/30 text-xs mx-1"></i>
+                                    <i class="fa fa-circle text-cyber-light/30 text-xs"></i>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="space-y-4">
+                            <div>
+                                <h3 class="text-sm font-medium text-cyber-primary mb-2">幸运数字</h3>
+                                <p class="text-base text-white">7</p>
+                            </div>
+                            <div>
+                                <h3 class="text-sm font-medium text-cyber-primary mb-2">幸运颜色</h3>
+                                <p class="text-base text-white">紫色</p>
+                            </div>
+                            <div>
+                                <h3 class="text-sm font-medium text-cyber-primary mb-2">今日忠告</h3>
+                                <p class="text-sm text-cyber-light">今天适合社交活动，但在工作上需要保持谨慎。数字7会为你带来好运，不妨留意身边与7相关的事物。</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="glass rounded-xl p-4 border border-cyber-secondary/30 mb-6">
+                        <h3 class="text-base font-semibold mb-3 text-cyber-secondary">详细解析</h3>
+                        <div class="space-y-4">
+                            <div>
+                                <h4 class="text-sm font-medium text-white mb-1">感情方面</h4>
+                                <p class="text-sm text-cyber-light">今天你的魅力指数较高，适合与伴侣增进感情或认识新朋友。数据流显示你在社交场合会有意外收获。</p>
+                            </div>
+                            <div>
+                                <h4 class="text-sm font-medium text-white mb-1">事业方面</h4>
+                                <p class="text-sm text-cyber-light">工作上可能会遇到一些小挫折，建议保持耐心，避免冲动决策。算法预测下午3点后会有转机。</p>
+                            </div>
+                            <div>
+                                <h4 class="text-sm font-medium text-white mb-1">健康方面</h4>
+                                <p class="text-sm text-cyber-light">注意休息，避免过度疲劳。适合进行轻度运动，如散步或瑜伽，有助于提升能量水平。</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="glass rounded-xl p-4 border border-cyber-accent/30">
+                        <h3 class="text-base font-semibold mb-3 text-cyber-accent">明日预告</h3>
+                        <p class="text-sm text-cyber-light">明日运势将有所提升，特别是在事业方面。建议提前准备，抓住即将到来的机遇。</p>
+                        <button class="mt-4 w-full py-2 rounded-lg bg-cyber-accent/20 text-cyber-accent text-sm hover:bg-cyber-accent/30 transition-all duration-300">
+                            解锁完整明日预测
+                        </button>
+                    </div>
+                </main>
+            </div>
+
+            <!-- 性格分析页面 -->
+            <div id="personality-page" class="page h-full flex flex-col hidden">
+                <!-- 头部 -->
+                <header class="p-4 border-b border-cyber-primary/30 flex items-center">
+                    <button id="back-from-personality" class="text-cyber-primary mr-4">
+                        <i class="fa fa-arrow-left"></i>
+                    </button>
+                    <h1 class="text-lg font-bold text-cyber-primary">性格分析</h1>
+                </header>
+
+                <!-- 主要内容 -->
+                <main class="flex-1 p-4 overflow-y-auto bg-grid">
+                    <div class="mb-6">
+                        <div class="text-center mb-4">
+                            <div class="w-20 h-20 rounded-full bg-gradient-to-br from-cyber-primary to-cyber-secondary flex items-center justify-center mx-auto animate-float">
+                                <i class="fa fa-user text-3xl text-cyber-darker"></i>
+                            </div>
+                            <h2 class="text-xl font-bold text-white mt-3">神秘访客</h2>
+                            <p class="text-sm text-cyber-light mt-1">完成分析，了解真实的自己</p>
+                        </div>
+
+                        <div class="glass rounded-xl p-4 border border-cyber-primary/30">
+                            <h3 class="text-base font-semibold mb-4 text-cyber-primary">开始测试</h3>
+                            <p class="text-sm text-cyber-light mb-4">请回答以下问题，我们将通过AI算法分析你的性格特质。测试大约需要5分钟。</p>
+                            <button id="start-personality-test" class="w-full py-3 rounded-lg bg-gradient-to-r from-cyber-primary to-cyber-secondary text-cyber-darker font-medium hover:shadow-cyber transition-all duration-300">
+                                立即开始
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="glass rounded-xl p-4 border border-cyber-secondary/30 mb-6">
+                        <h3 class="text-base font-semibold mb-3 text-cyber-secondary">分析内容</h3>
+                        <div class="space-y-3">
+                            <div class="flex items-center">
+                                <i class="fa fa-check-circle text-cyber-primary mr-2"></i>
+                                <p class="text-sm">基本性格特质分析</p>
+                            </div>
+                            <div class="flex items-center">
+                                <i class="fa fa-check-circle text-cyber-primary mr-2"></i>
+                                <p class="text-sm">优势与劣势评估</p>
+                            </div>
+                            <div class="flex items-center">
+                                <i class="fa fa-check-circle text-cyber-primary mr-2"></i>
+                                <p class="text-sm">适合的职业方向</p>
+                            </div>
+                            <div class="flex items-center">
+                                <i class="fa fa-check-circle text-cyber-primary mr-2"></i>
+                                <p class="text-sm">人际关系模式</p>
+                            </div>
+                            <div class="flex items-center">
+                                <i class="fa fa-check-circle text-cyber-primary mr-2"></i>
+                                <p class="text-sm">个性化发展建议</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="glass rounded-xl p-4 border border-cyber-accent/30">
+                        <h3 class="text-base font-semibold mb-3 text-cyber-accent">用户评价</h3>
+                        <div class="space-y-4">
+                            <div>
+                                <div class="flex items-center mb-1">
+                                    <p class="text-sm font-medium">张先生</p>
+                                    <div class="ml-auto flex">
+                                        <i class="fa fa-star text-cyber-accent text-xs"></i>
+                                        <i class="fa fa-star text-cyber-accent text-xs mx-0.5"></i>
+                                        <i class="fa fa-star text-cyber-accent text-xs"></i>
+                                        <i class="fa fa-star text-cyber-accent text-xs mx-0.5"></i>
+                                        <i class="fa fa-star text-cyber-accent text-xs"></i>
+                                    </div>
+                                </div>
+                                <p class="text-xs text-cyber-light">分析非常准确，让我重新认识了自己，对职业选择很有帮助。</p>
+                            </div>
+                            <div>
+                                <div class="flex items-center mb-1">
+                                    <p class="text-sm font-medium">李女士</p>
+                                    <div class="ml-auto flex">
+                                        <i class="fa fa-star text-cyber-accent text-xs"></i>
+                                        <i class="fa fa-star text-cyber-accent text-xs mx-0.5"></i>
+                                        <i class="fa fa-star text-cyber-accent text-xs"></i>
+                                        <i class="fa fa-star text-cyber-accent text-xs mx-0.5"></i>
+                                        <i class="fa fa-star-half-o text-cyber-accent text-xs"></i>
+                                    </div>
+                                </div>
+                                <p class="text-xs text-cyber-light">问题设计很巧妙，结果分析很详细，推荐给朋友们使用。</p>
+                            </div>
+                        </div>
+                    </div>
+                </main>
+            </div>
+
+            <!-- 性格测试问题页面 -->
+            <div id="personality-test-page" class="page h-full flex flex-col hidden">
+                <!-- 头部 -->
+                <header class="p-4 border-b border-cyber-primary/30 flex items-center">
+                    <button id="back-from-test" class="text-cyber-primary mr-4">
+                            <i class="fa fa-arrow-left"></i>
+                        </button>
+                    <h1 class="text-lg font-bold text-cyber-primary">性格测试</h1>
+                    <div class="ml-auto text-xs text-cyber-light">
+                        1/10
+                    </div>
+                </header>
+
+                <!-- 主要内容 -->
+                <main class="flex-1 p-4 overflow-y-auto bg-grid flex flex-col">
+                    <div class="glass rounded-xl p-6 border border-cyber-primary/30 mb-auto">
+                        <h3 class="text-base font-semibold mb-6 text-white">在社交场合中，你更倾向于？</h3>
+                        <div class="space-y-3">
+                            <button class="w-full py-3 rounded-lg bg-cyber-darker/50 border border-cyber-primary/30 text-left px-4 hover:border-cyber-primary transition-all duration-300">
+                                <p class="text-sm">主动与陌生人交流，享受社交活动</p>
+                            </button>
+                            <button class="w-full py-3 rounded-lg bg-cyber-darker/50 border border-cyber-primary/30 text-left px-4 hover:border-cyber-primary transition-all duration-300">
+                                <p class="text-sm">等待别人主动交流，逐渐融入</p>
+                            </button>
+                            <button class="w-full py-3 rounded-lg bg-cyber-darker/50 border border-cyber-primary/30 text-left px-4 hover:border-cyber-primary transition-all duration-300">
+                                <p class="text-sm">倾向于与熟悉的人交流</p>
+                            </button>
+                            <button class="w-full py-3 rounded-lg bg-cyber-darker/50 border border-cyber-primary/30 text-left px-4 hover:border-cyber-primary transition-all duration-300">
+                                <p class="text-sm">更喜欢独处，避免过多社交</p>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="mt-4">
+                        <button class="w-full py-3 rounded-lg bg-gradient-to-r from-cyber-primary to-cyber-secondary text-cyber-darker font-medium hover:shadow-cyber transition-all duration-300">
+                            下一题
+                        </button>
+                    </div>
+                </main>
+            </div>
+
+            <!-- 结果分享弹窗 -->
+            <div id="share-modal" class="fixed inset-0 bg-cyber-overlay flex items-center justify-center z-50 hidden">
+                <div class="glass rounded-xl p-6 border border-cyber-primary/30 w-[80%] max-w-xs">
+                    <h3 class="text-base font-semibold mb-4 text-center text-cyber-primary">分享结果</h3>
+                    <p class="text-sm text-cyber-light text-center mb-6">将你的运势分享给好友</p>
+                    <div class="flex justify-around mb-6">
+                        <button class="flex flex-col items-center">
+                            <div class="w-12 h-12 rounded-full bg-green-500/20 flex items-center justify-center mb-1">
+                                <i class="fa fa-weixin text-green-500 text-xl"></i>
+                            </div>
+                            <span class="text-xs">微信</span>
+                        </button>
+                        <button class="flex flex-col items-center">
+                            <div class="w-12 h-12 rounded-full bg-blue-500/20 flex items-center justify-center mb-1">
+                                <i class="fa fa-qq text-blue-500 text-xl"></i>
+                            </div>
+                            <span class="text-xs">QQ</span>
+                        </button>
+                        <button class="flex flex-col items-center">
+                            <div class="w-12 h-12 rounded-full bg-red-500/20 flex items-center justify-center mb-1">
+                                <i class="fa fa-weibo text-red-500 text-xl"></i>
+                            </div>
+                            <span class="text-xs">微博</span>
+                        </button>
+                        <button class="flex flex-col items-center">
+                            <div class="w-12 h-12 rounded-full bg-cyber-secondary/20 flex items-center justify-center mb-1">
+                                <i class="fa fa-link text-cyber-secondary text-xl"></i>
+                            </div>
+                            <span class="text-xs">复制链接</span>
+                        </button>
+                    </div>
+                    <button id="close-share-modal" class="w-full py-2 rounded-lg bg-cyber-darker/50 border border-cyber-primary/30 text-sm hover:border-cyber-primary transition-all duration-300">
+                        取消
+                    </button>
+                </div>
+            </div>
+
+            <!-- 发现页面 -->
+            <div id="discover-page" class="page h-full flex flex-col hidden">
+                <!-- 头部 -->
+                <header class="p-4 border-b border-cyber-primary/30">
+                    <h1 class="text-lg font-bold text-center text-cyber-primary text-shadow">
+                        探索发现
+                    </h1>
+                </header>
+
+                <!-- 主要内容 -->
+                <main class="flex-1 p-4 overflow-y-auto bg-grid">
+                    <!-- 搜索栏 -->
+                    <div class="glass rounded-xl p-3 mb-6 border border-cyber-primary/30">
+                        <div class="flex items-center bg-cyber-darker/50 rounded-lg p-2">
+                            <i class="fa fa-search text-cyber-light mr-2"></i>
+                            <input type="text" placeholder="搜索测算服务..." class="bg-transparent text-sm flex-1 focus:outline-none">
+                        </div>
+                    </div>
+
+                    <!-- 分类导航 -->
+                    <div class="flex overflow-x-auto space-x-3 mb-6 pb-2">
+                        <button class="px-4 py-2 rounded-full bg-cyber-primary text-cyber-darker text-sm whitespace-nowrap">
+                            全部
+                        </button>
+                        <button class="px-4 py-2 rounded-full bg-cyber-darker/50 border border-cyber-primary/30 text-sm whitespace-nowrap">
+                            星座运势
+                        </button>
+                        <button class="px-4 py-2 rounded-full bg-cyber-darker/50 border border-cyber-primary/30 text-sm whitespace-nowrap">
+                            塔罗牌
+                        </button>
+                        <button class="px-4 py-2 rounded-full bg-cyber-darker/50 border border-cyber-primary/30 text-sm whitespace-nowrap">
+                            面相分析
+                        </button>
+                        <button class="px-4 py-2 rounded-full bg-cyber-darker/50 border border-cyber-primary/30 text-sm whitespace-nowrap">
+                            手相解析
+                        </button>
+                    </div>
+
+                    <!-- 精选推荐 -->
+                    <section class="mb-6">
+                        <h2 class="text-base font-semibold mb-3 flex items-center">
+                            <i class="fa fa-fire text-cyber-accent mr-2"></i>
+                            热门推荐
+                        </h2>
+                        <div class="space-y-4">
+                            <div class="glass rounded-xl overflow-hidden border border-cyber-primary/30 hover:shadow-cyber transition-all duration-300 cursor-pointer">
+                                <div class="p-4">
+                                    <h3 class="text-base font-medium text-cyber-primary">AI塔罗牌解读</h3>
+                                    <p class="text-xs text-cyber-light mt-1">使用先进算法，深度解析你的塔罗牌结果</p>
+                                    <div class="mt-3 flex justify-between items-center">
+                                        <span class="text-xs bg-cyber-accent/20 text-cyber-accent px-2 py-0.5 rounded">热门</span>
+                                        <span class="text-sm text-white">¥19.9</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="glass rounded-xl overflow-hidden border border-cyber-secondary/30 hover:shadow-cyber-pink transition-all duration-300 cursor-pointer">
+                                <div class="p-4">
+                                    <h3 class="text-base font-medium text-cyber-secondary">数字命理分析</h3>
+                                    <p class="text-xs text-cyber-light mt-1">通过你的生日数字，揭示隐藏的性格密码</p>
+                                    <div class="mt-3 flex justify-between items-center">
+                                        <span class="text-xs bg-cyber-secondary/20 text-cyber-secondary px-2 py-0.5 rounded">新品</span>
+                                        <span class="text-sm text-white">¥29.9</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div id="zodiac-card" class="glass rounded-xl overflow-hidden border border-cyber-primary/30 hover:shadow-cyber transition-all duration-300 cursor-pointer">
+                                <div class="p-4">
+                                    <h3 class="text-base font-medium text-cyber-primary">星座运势查询</h3>
+                                    <p class="text-xs text-cyber-light mt-1">每日更新的星座运势，助你洞察未来</p>
+                                    <div class="mt-3 flex justify-between items-center">
+                                        <span class="text-xs bg-cyber-primary/20 text-cyber-primary px-2 py-0.5 rounded">免费</span>
+                                        <span class="text-sm text-white">立即查看</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div id="dream-card" class="glass rounded-xl overflow-hidden border border-cyber-primary/30 hover:shadow-cyber transition-all duration-300 cursor-pointer">
+                                <div class="p-4">
+                                    <h3 class="text-base font-medium text-cyber-primary">周公解梦</h3>
+                                    <p class="text-xs text-cyber-light mt-1">深度解析梦境，破解潜意识密码</p>
+                                    <div class="mt-3 flex justify-between items-center">
+                                        <span class="text-xs bg-cyber-primary/20 text-cyber-primary px-2 py-0.5 rounded">免费</span>
+                                        <span class="text-sm text-white">开始解梦</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div id="match-card" class="glass rounded-xl overflow-hidden border border-cyber-accent/30 hover:shadow-cyber transition-all duration-300 cursor-pointer">
+                                <div class="p-4">
+                                    <h3 class="text-base font-medium text-cyber-accent">缘分匹配测试</h3>
+                                    <p class="text-xs text-cyber-light mt-1">姓名星座双重匹配，测试你们的缘分指数</p>
+                                    <div class="mt-3 flex justify-between items-center">
+                                        <span class="text-xs bg-cyber-accent/20 text-cyber-accent px-2 py-0.5 rounded">免费</span>
+                                        <span class="text-sm text-white">开始匹配</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- 今日话题 -->
+                    <section>
+                        <h2 class="text-base font-semibold mb-3 flex items-center">
+                            <i class="fa fa-comment text-cyber-primary mr-2"></i>
+                            热门话题
+                        </h2>
+                        <div class="space-y-3">
+                            <div class="glass rounded-xl p-3 border border-cyber-primary/30 hover:border-cyber-primary transition-all duration-300 cursor-pointer">
+                                <p class="text-sm">#水星逆行对你的影响# 如何度过这段特殊时期？</p>
+                                <div class="mt-2 flex items-center text-xs text-cyber-light">
+                                    <span>3.2k 讨论</span>
+                                    <span class="mx-2">·</span>
+                                    <span>今日热门</span>
+                                </div>
+                            </div>
+                            <div class="glass rounded-xl p-3 border border-cyber-primary/30 hover:border-cyber-primary transition-all duration-300 cursor-pointer">
+                                <p class="text-sm">#六月桃花运分析# 哪个星座最容易脱单？</p>
+                                <div class="mt-2 flex items-center text-xs text-cyber-light">
+                                    <span>2.8k 讨论</span>
+                                    <span class="mx-2">·</span>
+                                    <span>热门趋势</span>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+                </main>
+            </div>
+
+            <!-- 历史记录页面 -->
+            <div id="history-page" class="page h-full flex flex-col hidden">
+                <!-- 头部 -->
+                <header class="p-4 border-b border-cyber-primary/30">
+                    <h1 class="text-lg font-bold text-center text-cyber-primary text-shadow">
+                        测算历史
+                    </h1>
+                </header>
+
+                <!-- 主要内容 -->
+                <main class="flex-1 p-4 overflow-y-auto bg-grid">
+                    <div class="glass rounded-xl p-6 border border-cyber-primary/30 text-center">
+                        <div class="w-20 h-20 rounded-full bg-cyber-darker/50 flex items-center justify-center mx-auto mb-4">
+                            <i class="fa fa-history text-3xl text-cyber-light/50"></i>
+                        </div>
+                        <h3 class="text-base font-medium text-white mb-2">暂无测算记录</h3>
+                        <p class="text-sm text-cyber-light mb-6">完成测算后，结果将保存在这里</p>
+                        <button id="go-to-home-from-history" class="px-6 py-2 rounded-lg bg-cyber-primary text-cyber-darker text-sm font-medium hover:shadow-cyber transition-all duration-300">
+                            去测算
+                        </button>
+                    </div>
+                </main>
+            </div>
+
+            <!-- 个人中心页面 -->
+            <div id="profile-page" class="page h-full flex flex-col hidden">
+                <!-- 头部 -->
+                <header class="p-4 border-b border-cyber-primary/30">
+                    <h1 class="text-lg font-bold text-center text-cyber-primary text-shadow">
+                        个人中心
+                    </h1>
+                </header>
+
+                <!-- 主要内容 -->
+                <main class="flex-1 p-4 overflow-y-auto bg-grid">
+                    <!-- 用户信息卡片 -->
+                    <div class="glass rounded-xl p-6 border border-cyber-primary/30 mb-6 text-center">
+                        <div class="w-20 h-20 rounded-full bg-gradient-to-br from-cyber-primary to-cyber-secondary flex items-center justify-center mx-auto mb-3">
+                            <i class="fa fa-user text-3xl text-cyber-darker"></i>
+                        </div>
+                        <h3 class="text-base font-medium text-white mb-1">访客用户</h3>
+                        <p class="text-xs text-cyber-light mb-4">登录后享受个性化服务</p>
+                        <button id="login-from-profile" class="px-6 py-2 rounded-lg bg-cyber-primary text-cyber-darker text-sm font-medium hover:shadow-cyber transition-all duration-300">
+                            登录/注册
+                        </button>
+                    </div>
+
+                    <!-- 功能菜单 -->
+                    <section class="mb-6">
+                        <h2 class="text-base font-semibold mb-3 flex items-center">
+                            <i class="fa fa-cog text-cyber-primary mr-2"></i>
+                            账户管理
+                        </h2>
+                        <div class="glass rounded-xl border border-cyber-primary/30 overflow-hidden">
+                            <button class="w-full flex items-center justify-between p-4 border-b border-cyber-primary/20">
+                                <span class="text-sm">我的收藏</span>
+                                <i class="fa fa-angle-right text-cyber-light"></i>
+                            </button>
+                            <button class="w-full flex items-center justify-between p-4 border-b border-cyber-primary/20">
+                                <span class="text-sm">优惠券</span>
+                                <div class="flex items-center">
+                                    <span class="text-xs text-cyber-accent mr-2">3张可用</span>
+                                    <i class="fa fa-angle-right text-cyber-light"></i>
+                                </div>
+                            </button>
+                            <button id="go-to-settings" class="w-full flex items-center justify-between p-4">
+                                <span class="text-sm">设置</span>
+                                <i class="fa fa-angle-right text-cyber-light"></i>
+                            </button>
+                        </div>
+                    </section>
+
+                    <!-- 支持与帮助 -->
+                    <section>
+                        <h2 class="text-base font-semibold mb-3 flex items-center">
+                            <i class="fa fa-question-circle text-cyber-primary mr-2"></i>
+                            支持与帮助
+                        </h2>
+                        <div class="glass rounded-xl border border-cyber-primary/30 overflow-hidden">
+                            <button id="go-to-about" class="w-full flex items-center justify-between p-4 border-b border-cyber-primary/20">
+                                <span class="text-sm">关于我们</span>
+                                <i class="fa fa-angle-right text-cyber-light"></i>
+                            </button>
+                            <button id="go-to-agreement" class="w-full flex items-center justify-between p-4">
+                                <span class="text-sm">用户协议</span>
+                                <i class="fa fa-angle-right text-cyber-light"></i>
+                            </button>
+                        </div>
+                    </section>
+                </main>
+            </div>
+
+            <!-- 爱情运势页面 -->
+            <div id="love-fortune-page" class="page h-full flex flex-col hidden">
+                <!-- 头部 -->
+                <header class="p-4 border-b border-cyber-primary/30 flex items-center">
+                    <button id="back-from-love-fortune" class="text-cyber-primary mr-4">
+                        <i class="fa fa-arrow-left"></i>
+                    </button>
+                    <h1 class="text-lg font-bold text-cyber-primary">爱情运势</h1>
+                </header>
+
+                <!-- 主要内容 -->
+                <main class="flex-1 p-4 overflow-y-auto bg-grid">
+                    <div class="glass rounded-xl p-4 border border-cyber-secondary/30 mb-6">
+                        <div class="text-center mb-4">
+                            <h2 class="text-xl font-bold text-cyber-secondary text-shadow">2024年6月15日</h2>
+                            <p class="text-sm text-cyber-light">恋爱指数分析</p>
+                        </div>
+
+                        <div class="flex justify-center mb-6">
+                            <div class="text-center w-24">
+                                <p class="text-xs text-cyber-light mb-1">恋爱运势</p>
+                                <div class="flex justify-center">
+                                    <i class="fa fa-heart text-cyber-secondary text-xs"></i>
+                                    <i class="fa fa-heart text-cyber-secondary text-xs mx-1"></i>
+                                    <i class="fa fa-heart text-cyber-secondary text-xs"></i>
+                                    <i class="fa fa-heart text-cyber-light/30 text-xs mx-1"></i>
+                                    <i class="fa fa-heart text-cyber-light/30 text-xs"></i>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="space-y-4">
+                            <div>
+                                <h3 class="text-sm font-medium text-cyber-secondary mb-2">今日恋爱关键词</h3>
+                                <p class="text-base text-white">沟通与理解</p>
+                            </div>
+                            <div>
+                                <h3 class="text-sm font-medium text-cyber-secondary mb-2">恋爱忠告</h3>
+                                <p class="text-sm text-cyber-light">今天是增进感情的好时机，坦诚的沟通会让你们的关系更加亲密。数字流显示，倾听比表达更重要。</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="glass rounded-xl p-4 border border-cyber-secondary/30 mb-6">
+                        <h3 class="text-base font-semibold mb-3 text-cyber-secondary">详细解析</h3>
+                        <div class="space-y-4">
+                            <div>
+                                <h4 class="text-sm font-medium text-white mb-1">单身者</h4>
+                                <p class="text-sm text-cyber-light">社交场合会有不错的机会，但不要急于求成。算法建议保持开放的心态，关注内在品质而非外表。</p>
+                            </div>
+                            <div>
+                                <h4 class="text-sm font-medium text-white mb-1">恋爱中</h4>
+                                <p class="text-sm text-cyber-light">与伴侣的互动会更加默契，适合安排一次轻松的约会。注意小细节，它们会让对方感受到你的关心。</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="glass rounded-xl p-4 border border-cyber-accent/30">
+                        <h3 class="text-base font-semibold mb-3 text-cyber-accent">爱情配对</h3>
+                        <p class="text-sm text-cyber-light mb-4">查看与不同星座的匹配度，寻找最适合你的另一半。</p>
+                        <button class="w-full py-2 rounded-lg bg-cyber-accent/20 text-cyber-accent text-sm hover:bg-cyber-accent/30 transition-all duration-300">
+                            解锁完整配对分析
+                        </button>
+                    </div>
+                </main>
+            </div>
+
+            <!-- 事业财运页面 -->
+            <div id="career-fortune-page" class="page h-full flex flex-col hidden">
+                <!-- 头部 -->
+                <header class="p-4 border-b border-cyber-primary/30 flex items-center">
+                    <button id="back-from-career-fortune" class="text-cyber-primary mr-4">
+                        <i class="fa fa-arrow-left"></i>
+                    </button>
+                    <h1 class="text-lg font-bold text-cyber-primary">事业财运</h1>
+                </header>
+
+                <!-- 主要内容 -->
+                <main class="flex-1 p-4 overflow-y-auto bg-grid">
+                    <div class="glass rounded-xl p-4 border border-cyber-primary/30 mb-6">
+                        <div class="text-center mb-4">
+                            <h2 class="text-xl font-bold text-cyber-primary text-shadow">2024年6月15日</h2>
+                            <p class="text-sm text-cyber-light">事业财运分析</p>
+                        </div>
+
+                        <div class="flex justify-around mb-6">
+                            <div class="text-center">
+                                <p class="text-xs text-cyber-light mb-1">事业运势</p>
+                                <div class="flex justify-center">
+                                    <i class="fa fa-briefcase text-cyber-accent text-xs"></i>
+                                    <i class="fa fa-briefcase text-cyber-accent text-xs mx-1"></i>
+                                    <i class="fa fa-briefcase text-cyber-light/30 text-xs"></i>
+                                    <i class="fa fa-briefcase text-cyber-light/30 text-xs mx-1"></i>
+                                    <i class="fa fa-briefcase text-cyber-light/30 text-xs"></i>
+                                </div>
+                            </div>
+                            <div class="text-center">
+                                <p class="text-xs text-cyber-light mb-1">财运指数</p>
+                                <div class="flex justify-center">
+                                    <i class="fa fa-money text-cyber-accent text-xs"></i>
+                                    <i class="fa fa-money text-cyber-accent text-xs mx-1"></i>
+                                    <i class="fa fa-money text-cyber-accent text-xs"></i>
+                                    <i class="fa fa-money text-cyber-accent text-xs mx-1"></i>
+                                    <i class="fa fa-money text-cyber-light/30 text-xs"></i>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="space-y-4">
+                            <div>
+                                <h3 class="text-sm font-medium text-cyber-primary mb-2">财运关键词</h3>
+                                <p class="text-base text-white">稳健投资</p>
+                            </div>
+                            <div>
+                                <h3 class="text-sm font-medium text-cyber-primary mb-2">事业忠告</h3>
+                                <p class="text-sm text-cyber-light">今天工作上需要更加专注，避免分心。算法预测下午可能会有意外的财务机会，保持警觉。</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="glass rounded-xl p-4 border border-cyber-primary/30 mb-6">
+                        <h3 class="text-base font-semibold mb-3 text-cyber-primary">详细解析</h3>
+                        <div class="space-y-4">
+                            <div>
+                                <h4 class="text-sm font-medium text-white mb-1">事业方面</h4>
+                                <p class="text-sm text-cyber-light">今天可能会遇到一些工作上的挑战，建议保持耐心和专注。数据流显示，团队合作会帮助你度过难关。</p>
+                            </div>
+                            <div>
+                                <h4 class="text-sm font-medium text-white mb-1">财运方面</h4>
+                                <p class="text-sm text-cyber-light">财运不错，适合进行小额投资或理财规划。避免冲动消费，特别是在电子产品方面。</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="glass rounded-xl p-4 border border-cyber-accent/30">
+                        <h3 class="text-base font-semibold mb-3 text-cyber-accent">财富预测</h3>
+                        <p class="text-sm text-cyber-light mb-4">查看未来一周的财富趋势预测和投资建议。</p>
+                        <button class="w-full py-2 rounded-lg bg-cyber-accent/20 text-cyber-accent text-sm hover:bg-cyber-accent/30 transition-all duration-300">
+                            解锁完整财富预测
+                        </button>
+                    </div>
+                </main>
+            </div>
+
+            <!-- 性格测试结果页面 -->
+            <div id="personality-result-page" class="page h-full flex flex-col hidden">
+                <!-- 头部 -->
+                <header class="p-4 border-b border-cyber-primary/30 flex items-center">
+                    <button id="back-from-result" class="text-cyber-primary mr-4">
+                        <i class="fa fa-arrow-left"></i>
+                    </button>
+                    <h1 class="text-lg font-bold text-cyber-primary">测试结果</h1>
+                    <button id="share-result" class="ml-auto text-cyber-primary">
+                        <i class="fa fa-share-alt"></i>
+                    </button>
+                </header>
+
+                <!-- 主要内容 -->
+                <main class="flex-1 p-4 overflow-y-auto bg-grid">
+                    <div class="text-center mb-6">
+                        <h2 class="text-xl font-bold text-cyber-primary text-shadow mb-2">赛博预言家</h2>
+                        <p class="text-sm text-cyber-light">你的性格类型分析</p>
+                    </div>
+
+                    <div class="glass rounded-xl p-4 border border-cyber-primary/30 mb-6">
+                        <h3 class="text-base font-semibold mb-3 text-cyber-primary">基本性格特质</h3>
+                        <p class="text-sm text-cyber-light">你是一个充满好奇心和创造力的人，喜欢探索未知的领域。你善于思考，对新技术和新知识有着强烈的渴望。在社交场合中，你既能够享受独处的时光，也能够与他人建立深入的连接。</p>
+                    </div>
+
+                    <div class="glass rounded-xl p-4 border border-cyber-secondary/30 mb-6">
+                        <h3 class="text-base font-semibold mb-3 text-cyber-secondary">优势与劣势</h3>
+                        <div class="space-y-3">
+                            <div>
+                                <h4 class="text-sm font-medium text-white mb-1">优势</h4>
+                                <p class="text-sm text-cyber-light">创造力强、思维敏捷、适应性好、善于分析问题</p>
+                            </div>
+                            <div>
+                                <h4 class="text-sm font-medium text-white mb-1">劣势</h4>
+                                <p class="text-sm text-cyber-light">有时过于理想主义、决策可能犹豫不决、对细节关注度不够</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="glass rounded-xl p-4 border border-cyber-accent/30 mb-6">
+                        <h3 class="text-base font-semibold mb-3 text-cyber-accent">适合的职业方向</h3>
+                        <p class="text-sm text-cyber-light mb-3">基于你的性格分析，以下职业方向可能更适合你：</p>
+                        <div class="flex flex-wrap gap-2">
+                            <span class="px-3 py-1 bg-cyber-darker/50 border border-cyber-accent/30 rounded-full text-xs">软件开发</span>
+                            <span class="px-3 py-1 bg-cyber-darker/50 border border-cyber-accent/30 rounded-full text-xs">数据分析</span>
+                            <span class="px-3 py-1 bg-cyber-darker/50 border border-cyber-accent/30 rounded-full text-xs">科研工作</span>
+                            <span class="px-3 py-1 bg-cyber-darker/50 border border-cyber-accent/30 rounded-full text-xs">设计创意</span>
+                        </div>
+                    </div>
+
+                    <div class="glass rounded-xl p-4 border border-cyber-primary/30">
+                        <h3 class="text-base font-semibold mb-3 text-cyber-primary">发展建议</h3>
+                        <p class="text-sm text-cyber-light">建议你在保持创造力的同时，注重培养执行力和专注力。数字流显示，设定明确的目标和时间表会让你更容易实现理想。同时，学会更好地管理时间和资源，避免过度分散精力。</p>
+                    </div>
+                </main>
+            </div>
+
+            <!-- 付费订阅页面 -->
+            <div id="subscription-page" class="page h-full flex flex-col hidden">
+                <!-- 头部 -->
+                <header class="p-4 border-b border-cyber-primary/30 flex items-center">
+                    <button id="back-from-subscription" class="text-cyber-primary mr-4">
+                        <i class="fa fa-arrow-left"></i>
+                    </button>
+                    <h1 class="text-lg font-bold text-cyber-primary">会员订阅</h1>
+                </header>
+
+                <!-- 主要内容 -->
+                <main class="flex-1 p-4 overflow-y-auto bg-grid">
+                    <div class="text-center mb-6">
+                        <h2 class="text-xl font-bold text-cyber-accent text-shadow mb-2">赛博会员</h2>
+                        <p class="text-sm text-cyber-light">解锁全部高级测算功能</p>
+                    </div>
+
+                    <div class="space-y-4 mb-6">
+                        <div class="glass rounded-xl p-4 border-2 border-cyber-accent hover:shadow-cyber-yellow transition-all duration-300 relative">
+                            <div class="absolute -top-3 left-4 bg-cyber-accent text-cyber-darker text-xs px-2 py-0.5 rounded">
+                                推荐
+                            </div>
+                            <h3 class="text-base font-semibold mb-1 text-cyber-accent">月度会员</h3>
+                            <p class="text-2xl font-bold text-white mb-3">¥29.9<span class="text-xs text-cyber-light">/月</span></p>
+                            <div class="space-y-2">
+                                <div class="flex items-center">
+                                    <i class="fa fa-check text-cyber-primary mr-2"></i>
+                                    <p class="text-sm">解锁所有付费测算</p>
+                                </div>
+                                <div class="flex items-center">
+                                    <i class="fa fa-check text-cyber-primary mr-2"></i>
+                                    <p class="text-sm">每日运势详细解读</p>
+                                </div>
+                                <div class="flex items-center">
+                                    <i class="fa fa-check text-cyber-primary mr-2"></i>
+                                    <p class="text-sm">专属AI顾问</p>
+                                </div>
+                            </div>
+                            <button class="w-full mt-4 py-2 rounded-lg bg-gradient-to-r from-cyber-accent to-cyber-accent/80 text-cyber-darker font-medium hover:shadow-cyber-yellow transition-all duration-300">
+                                立即订阅
+                            </button>
+                        </div>
+
+                        <div class="glass rounded-xl p-4 border border-cyber-primary/30 hover:border-cyber-primary transition-all duration-300">
+                            <h3 class="text-base font-semibold mb-1 text-white">年度会员</h3>
+                            <p class="text-2xl font-bold text-white mb-3">¥258<span class="text-xs text-cyber-light">/年</span></p>
+                            <p class="text-xs text-cyber-accent mb-3">相当于¥21.5/月，节省¥90</p>
+                            <div class="space-y-2">
+                                <div class="flex items-center">
+                                    <i class="fa fa-check text-cyber-primary mr-2"></i>
+                                    <p class="text-sm">包含月度会员所有权益</p>
+                                </div>
+                                <div class="flex items-center">
+                                    <i class="fa fa-check text-cyber-primary mr-2"></i>
+                                    <p class="text-sm">额外赠送3次大师测算</p>
+                                </div>
+                                <div class="flex items-center">
+                                    <i class="fa fa-check text-cyber-primary mr-2"></i>
+                                    <p class="text-sm">优先体验新功能</p>
+                                </div>
+                            </div>
+                            <button class="w-full mt-4 py-2 rounded-lg bg-cyber-darker/50 border border-cyber-primary text-white font-medium hover:border-cyber-primary/80 transition-all duration-300">
+                                立即订阅
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="glass rounded-xl p-4 border border-cyber-primary/30">
+                        <h3 class="text-base font-semibold mb-3 text-cyber-primary">会员特权</h3>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div class="flex flex-col items-center p-3 bg-cyber-darker/30 rounded-lg">
+                                <i class="fa fa-unlock-alt text-cyber-accent text-xl mb-2"></i>
+                                <p class="text-xs text-center">全部付费内容</p>
+                            </div>
+                            <div class="flex flex-col items-center p-3 bg-cyber-darker/30 rounded-lg">
+                                <i class="fa fa-star text-cyber-accent text-xl mb-2"></i>
+                                <p class="text-xs text-center">专属报告</p>
+                            </div>
+                            <div class="flex flex-col items-center p-3 bg-cyber-darker/30 rounded-lg">
+                                <i class="fa fa-bolt text-cyber-accent text-xl mb-2"></i>
+                                <p class="text-xs text-center">无广告体验</p>
+                            </div>
+                            <div class="flex flex-col items-center p-3 bg-cyber-darker/30 rounded-lg">
+                                <i class="fa fa-gift text-cyber-accent text-xl mb-2"></i>
+                                <p class="text-xs text-center">生日特权</p>
+                            </div>
+                        </div>
+                    </div>
+                </main>
+            </div>
+
+            <!-- 设置页面 -->
+            <div id="settings-page" class="page h-full flex flex-col hidden">
+                <!-- 头部 -->
+                <header class="p-4 border-b border-cyber-primary/30 flex items-center">
+                    <button id="back-from-settings" class="text-cyber-primary mr-4">
+                        <i class="fa fa-arrow-left"></i>
+                    </button>
+                    <h1 class="text-lg font-bold text-cyber-primary">设置</h1>
+                </header>
+
+                <!-- 主要内容 -->
+                <main class="flex-1 p-4 overflow-y-auto bg-grid">
+                    <section class="mb-6">
+                        <h2 class="text-base font-semibold mb-3 flex items-center">
+                            <i class="fa fa-bell text-cyber-primary mr-2"></i>
+                            通知设置
+                        </h2>
+                        <div class="glass rounded-xl border border-cyber-primary/30 overflow-hidden">
+                            <div class="flex items-center justify-between p-4 border-b border-cyber-primary/20">
+                                <span class="text-sm">每日运势提醒</span>
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" value="" class="sr-only peer">
+                                    <div class="w-9 h-5 bg-cyber-darker/50 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-cyber-primary"></div>
+                                </label>
+                            </div>
+                            <div class="flex items-center justify-between p-4">
+                                <span class="text-sm">活动通知</span>
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" value="" class="sr-only peer">
+                                    <div class="w-9 h-5 bg-cyber-darker/50 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-cyber-primary"></div>
+                                </label>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section class="mb-6">
+                        <h2 class="text-base font-semibold mb-3 flex items-center">
+                            <i class="fa fa-shield text-cyber-primary mr-2"></i>
+                            隐私设置
+                        </h2>
+                        <div class="glass rounded-xl border border-cyber-primary/30 overflow-hidden">
+                            <button class="w-full flex items-center justify-between p-4 border-b border-cyber-primary/20">
+                                <span class="text-sm">清除浏览历史</span>
+                                <i class="fa fa-angle-right text-cyber-light"></i>
+                            </button>
+                            <button class="w-full flex items-center justify-between p-4">
+                                <span class="text-sm">隐私政策</span>
+                                <i class="fa fa-angle-right text-cyber-light"></i>
+                            </button>
+                        </div>
+                    </section>
+
+                    <section>
+                        <h2 class="text-base font-semibold mb-3 flex items-center">
+                            <i class="fa fa-info-circle text-cyber-primary mr-2"></i>
+                            关于
+                        </h2>
+                        <div class="glass rounded-xl border border-cyber-primary/30 overflow-hidden">
+                            <div class="flex items-center justify-between p-4 border-b border-cyber-primary/20">
+                                <span class="text-sm">版本</span>
+                                <span class="text-sm text-cyber-light">1.0.0</span>
+                            </div>
+                            <button class="w-full flex items-center justify-between p-4">
+                                <span class="text-sm">检查更新</span>
+                                <i class="fa fa-angle-right text-cyber-light"></i>
+                            </button>
+                        </div>
+                    </section>
+                </main>
+            </div>
+
+            <!-- 关于我们页面 -->
+            <div id="about-page" class="page h-full flex flex-col hidden">
+                <!-- 头部 -->
+                <header class="p-4 border-b border-cyber-primary/30 flex items-center">
+                    <button id="back-from-about" class="text-cyber-primary mr-4">
+                        <i class="fa fa-arrow-left"></i>
+                    </button>
+                    <h1 class="text-lg font-bold text-cyber-primary">关于我们</h1>
+                </header>
+
+                <!-- 主要内容 -->
+                <main class="flex-1 p-4 overflow-y-auto bg-grid">
+                    <div class="text-center mb-6">
+                        <div class="w-24 h-24 rounded-full bg-gradient-to-br from-cyber-primary to-cyber-secondary flex items-center justify-center mx-auto mb-4 animate-float">
+                            <i class="fa fa-cube text-4xl text-cyber-darker"></i>
+                        </div>
+                        <h2 class="text-xl font-bold text-cyber-primary text-shadow mb-1">赛博算命</h2>
+                        <p class="text-sm text-cyber-light">未来已来，命运可算</p>
+                    </div>
+
+                    <div class="glass rounded-xl p-4 border border-cyber-primary/30 mb-6">
+                        <h3 class="text-base font-semibold mb-3 text-cyber-primary">关于我们</h3>
+                        <p class="text-sm text-cyber-light leading-relaxed">
+                            赛博算命是一款结合先进AI算法与传统命理学的智能测算应用。我们致力于通过数据分析和模式识别，为用户提供个性化的命运解读和生活指导。
+                        </p>
+                        <p class="text-sm text-cyber-light leading-relaxed mt-3">
+                            我们的团队由数据科学家、命理专家和UX设计师组成，旨在打造最准确、最易用的智能测算平台。所有测算结果仅供参考，命运掌握在自己手中。
+                        </p>
+                    </div>
+
+                    <div class="glass rounded-xl p-4 border border-cyber-primary/30">
+                        <h3 class="text-base font-semibold mb-3 text-cyber-primary">联系我们</h3>
+                        <div class="space-y-3">
+                            <div class="flex items-center">
+                                <i class="fa fa-envelope text-cyber-primary mr-3 w-5 text-center"></i>
+                                <p class="text-sm">support@cyberfortune.com</p>
+                            </div>
+                            <div class="flex items-center">
+                                <i class="fa fa-weixin text-cyber-primary mr-3 w-5 text-center"></i>
+                                <p class="text-sm">CyberFortune</p>
+                            </div>
+                            <div class="flex items-center">
+                                <i class="fa fa-weibo text-cyber-primary mr-3 w-5 text-center"></i>
+                                <p class="text-sm">@赛博算命</p>
+                            </div>
+                        </div>
+                    </div>
+                </main>
+            </div>
+
+            <!-- 用户协议页面 -->
+            <div id="agreement-page" class="page h-full flex flex-col hidden">
+                <!-- 头部 -->
+                <header class="p-4 border-b border-cyber-primary/30 flex items-center">
+                    <button id="back-from-agreement" class="text-cyber-primary mr-4">
+                        <i class="fa fa-arrow-left"></i>
+                    </button>
+                    <h1 class="text-lg font-bold text-cyber-primary">用户协议</h1>
+                </header>
+
+                <!-- 主要内容 -->
+                <main class="flex-1 p-4 overflow-y-auto bg-grid">
+                    <div class="glass rounded-xl p-4 border border-cyber-primary/30">
+                        <h2 class="text-base font-semibold mb-3 text-cyber-primary">赛博算命用户服务协议</h2>
+                        <p class="text-xs text-cyber-light mb-3">更新日期：2024年6月1日</p>
+                        
+                        <div class="space-y-4">
+                            <div>
+                                <h3 class="text-sm font-medium text-white mb-2">1. 协议的接受</h3>
+                                <p class="text-xs text-cyber-light leading-relaxed">
+                                    欢迎使用赛博算命应用。本协议是您与赛博算命之间关于使用我们的服务所达成的法律协议。请您仔细阅读本协议的全部内容。
+                                </p>
+                            </div>
+                            <div>
+                                <h3 class="text-sm font-medium text-white mb-2">2. 用户资格</h3>
+                                <p class="text-xs text-cyber-light leading-relaxed">
+                                    您必须年满18周岁才能使用我们的服务。如果您未满18周岁，请在父母或监护人的指导下使用。
+                                </p>
+                            </div>
+                            <div>
+                                <h3 class="text-sm font-medium text-white mb-2">3. 用户行为规范</h3>
+                                <p class="text-xs text-cyber-light leading-relaxed">
+                                    您承诺不会利用我们的服务进行任何违法或不当的活动，包括但不限于传播虚假信息、侵犯他人权益等。
+                                </p>
+                            </div>
+                            <div>
+                                <h3 class="text-sm font-medium text-white mb-2">4. 知识产权</h3>
+                                <p class="text-xs text-cyber-light leading-relaxed">
+                                    赛博算命拥有本应用的所有知识产权。未经授权，您不得复制、修改、传播我们的内容。
+                                </p>
+                            </div>
+                            <div>
+                                <h3 class="text-sm font-medium text-white mb-2">5. 免责声明</h3>
+                                <p class="text-xs text-cyber-light leading-relaxed">
+                                    所有测算结果仅供参考，不构成任何形式的建议或指导。我们不对用户基于测算结果做出的任何决定负责。
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </main>
+            </div>
+
+            <!-- 隐私政策页面 -->
+            <div id="privacy-page" class="page h-full flex flex-col hidden">
+                <!-- 头部 -->
+                <header class="p-4 border-b border-cyber-primary/30 flex items-center">
+                    <button id="back-from-privacy" class="text-cyber-primary mr-4">
+                        <i class="fa fa-arrow-left"></i>
+                    </button>
+                    <h1 class="text-lg font-bold text-cyber-primary">隐私政策</h1>
+                </header>
+
+                <!-- 主要内容 -->
+                <main class="flex-1 p-4 overflow-y-auto bg-grid">
+                    <div class="glass rounded-xl p-4 border border-cyber-primary/30">
+                        <h2 class="text-base font-semibold mb-3 text-cyber-primary">赛博算命隐私政策</h2>
+                        <p class="text-xs text-cyber-light mb-3">更新日期：2024年6月1日</p>
+                        
+                        <div class="space-y-4">
+                            <div>
+                                <h3 class="text-sm font-medium text-white mb-2">1. 信息收集</h3>
+                                <p class="text-xs text-cyber-light leading-relaxed">
+                                    我们收集您提供的个人信息，如手机号码、昵称等，以及您使用我们服务时产生的信息，如浏览记录、测算记录等。
+                                </p>
+                            </div>
+                            <div>
+                                <h3 class="text-sm font-medium text-white mb-2">2. 信息使用</h3>
+                                <p class="text-xs text-cyber-light leading-relaxed">
+                                    我们使用收集的信息来提供、维护和改进我们的服务，开发新功能，以及为您提供个性化的用户体验。
+                                </p>
+                            </div>
+                            <div>
+                                <h3 class="text-sm font-medium text-white mb-2">3. 信息保护</h3>
+                                <p class="text-xs text-cyber-light leading-relaxed">
+                                    我们采取各种安全措施保护您的个人信息，防止未经授权的访问、使用或泄露。
+                                </p>
+                            </div>
+                            <div>
+                                <h3 class="text-sm font-medium text-white mb-2">4. 信息共享</h3>
+                                <p class="text-xs text-cyber-light leading-relaxed">
+                                    除非获得您的明确同意或法律要求，我们不会向第三方共享您的个人信息。
+                                </p>
+                            </div>
+                            <div>
+                                <h3 class="text-sm font-medium text-white mb-2">5. 政策更新</h3>
+                                <p class="text-xs text-cyber-light leading-relaxed">
+                                    我们可能会不时更新本隐私政策。更新后，我们会在应用中通知您。
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </main>
+            </div>
+
+            <!-- 星座运势页面 -->
+            <div id="zodiac-page" class="page h-full flex flex-col hidden">
+                <!-- 头部 -->
+                <header class="p-4 border-b border-cyber-primary/30 flex items-center">
+                    <button id="back-from-zodiac" class="text-cyber-primary mr-4">
+                        <i class="fa fa-arrow-left"></i>
+                    </button>
+                    <h1 class="text-lg font-bold text-cyber-primary">星座运势</h1>
+                </header>
+
+                <!-- 主要内容 -->
+                <main class="flex-1 p-4 overflow-y-auto bg-grid">
+                    <div class="glass rounded-xl p-4 border border-cyber-primary/30 mb-6">
+                        <h2 class="text-base font-semibold mb-4 text-cyber-primary">选择星座</h2>
+                        <div class="grid grid-cols-4 gap-3">
+                            <!-- 12星座图标 -->
+                            <div class="zodiac-item flex flex-col items-center justify-center p-3 rounded-lg border border-cyber-primary/30 hover:border-cyber-primary transition-all duration-300 cursor-pointer">
+                                <i class="fa fa-star text-2xl text-cyber-primary mb-1"></i>
+                                <span class="text-xs">白羊座</span>
+                            </div>
+                            <div class="zodiac-item flex flex-col items-center justify-center p-3 rounded-lg border border-cyber-primary/30 hover:border-cyber-primary transition-all duration-300 cursor-pointer">
+                                <i class="fa fa-star text-2xl text-cyber-primary mb-1"></i>
+                                <span class="text-xs">金牛座</span>
+                            </div>
+                            <div class="zodiac-item flex flex-col items-center justify-center p-3 rounded-lg border border-cyber-primary/30 hover:border-cyber-primary transition-all duration-300 cursor-pointer">
+                                <i class="fa fa-star text-2xl text-cyber-primary mb-1"></i>
+                                <span class="text-xs">双子座</span>
+                            </div>
+                            <div class="zodiac-item flex flex-col items-center justify-center p-3 rounded-lg border border-cyber-primary/30 hover:border-cyber-primary transition-all duration-300 cursor-pointer">
+                                <i class="fa fa-star text-2xl text-cyber-primary mb-1"></i>
+                                <span class="text-xs">巨蟹座</span>
+                            </div>
+                            <div class="zodiac-item flex flex-col items-center justify-center p-3 rounded-lg border border-cyber-primary/30 hover:border-cyber-primary transition-all duration-300 cursor-pointer">
+                                <i class="fa fa-star text-2xl text-cyber-primary mb-1"></i>
+                                <span class="text-xs">狮子座</span>
+                            </div>
+                            <div class="zodiac-item flex flex-col items-center justify-center p-3 rounded-lg border border-cyber-primary/30 hover:border-cyber-primary transition-all duration-300 cursor-pointer">
+                                <i class="fa fa-star text-2xl text-cyber-primary mb-1"></i>
+                                <span class="text-xs">处女座</span>
+                            </div>
+                            <div class="zodiac-item flex flex-col items-center justify-center p-3 rounded-lg border border-cyber-primary/30 hover:border-cyber-primary transition-all duration-300 cursor-pointer">
+                                <i class="fa fa-star text-2xl text-cyber-primary mb-1"></i>
+                                <span class="text-xs">天秤座</span>
+                            </div>
+                            <div class="zodiac-item flex flex-col items-center justify-center p-3 rounded-lg border border-cyber-primary/30 hover:border-cyber-primary transition-all duration-300 cursor-pointer">
+                                <i class="fa fa-star text-2xl text-cyber-primary mb-1"></i>
+                                <span class="text-xs">天蝎座</span>
+                            </div>
+                            <div class="zodiac-item flex flex-col items-center justify-center p-3 rounded-lg border border-cyber-primary/30 hover:border-cyber-primary transition-all duration-300 cursor-pointer">
+                                <i class="fa fa-star text-2xl text-cyber-primary mb-1"></i>
+                                <span class="text-xs">射手座</span>
+                            </div>
+                            <div class="zodiac-item flex flex-col items-center justify-center p-3 rounded-lg border border-cyber-primary/30 hover:border-cyber-primary transition-all duration-300 cursor-pointer">
+                                <i class="fa fa-star text-2xl text-cyber-primary mb-1"></i>
+                                <span class="text-xs">摩羯座</span>
+                            </div>
+                            <div class="zodiac-item flex flex-col items-center justify-center p-3 rounded-lg border border-cyber-primary/30 hover:border-cyber-primary transition-all duration-300 cursor-pointer">
+                                <i class="fa fa-star text-2xl text-cyber-primary mb-1"></i>
+                                <span class="text-xs">水瓶座</span>
+                            </div>
+                            <div class="zodiac-item flex flex-col items-center justify-center p-3 rounded-lg border border-cyber-primary/30 hover:border-cyber-primary transition-all duration-300 cursor-pointer">
+                                <i class="fa fa-star text-2xl text-cyber-primary mb-1"></i>
+                                <span class="text-xs">双鱼座</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="glass rounded-xl p-4 border border-cyber-primary/30">
+                        <h2 class="text-base font-semibold mb-3 text-cyber-primary">今日星座运势概览</h2>
+                        <p class="text-sm text-cyber-light mb-4">选择一个星座查看详细运势分析，包括爱情、事业、财运和健康等方面的预测。</p>
+                        <button class="w-full py-3 rounded-lg bg-gradient-to-r from-cyber-primary to-cyber-secondary text-cyber-darker font-medium hover:shadow-cyber transition-all duration-300">
+                            根据生日自动匹配星座
+                        </button>
+                    </div>
+                </main>
+            </div>
+
+            <!-- 解梦页面 -->
+            <div id="dream-page" class="page h-full flex flex-col hidden">
+                <!-- 头部 -->
+                <header class="p-4 border-b border-cyber-primary/30 flex items-center">
+                    <button id="back-from-dream" class="text-cyber-primary mr-4">
+                        <i class="fa fa-arrow-left"></i>
+                    </button>
+                    <h1 class="text-lg font-bold text-cyber-primary">周公解梦</h1>
+                </header>
+
+                <!-- 主要内容 -->
+                <main class="flex-1 p-4 overflow-y-auto bg-grid">
+                    <div class="glass rounded-xl p-4 border border-cyber-primary/30 mb-6">
+                        <h2 class="text-base font-semibold mb-4 text-cyber-primary">梦境搜索</h2>
+                        <div class="relative">
+                            <input type="text" placeholder="输入梦境关键词，如'水'、'飞行'、'考试'..." class="w-full bg-cyber-darker/50 border border-cyber-primary/30 rounded-lg p-3 pl-10 text-sm focus:outline-none focus:border-cyber-primary transition-all duration-300">
+                            <i class="fa fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-cyber-light"></i>
+                        </div>
+                    </div>
+
+                    <div class="glass rounded-xl p-4 border border-cyber-primary/30 mb-6">
+                        <h2 class="text-base font-semibold mb-4 text-cyber-primary">热门梦境分类</h2>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div class="dream-category flex items-center p-3 rounded-lg border border-cyber-primary/30 hover:border-cyber-primary transition-all duration-300 cursor-pointer">
+                                <i class="fa fa-heart text-cyber-secondary mr-3"></i>
+                                <span class="text-sm">情感类</span>
+                            </div>
+                            <div class="dream-category flex items-center p-3 rounded-lg border border-cyber-primary/30 hover:border-cyber-primary transition-all duration-300 cursor-pointer">
+                                <i class="fa fa-briefcase text-cyber-accent mr-3"></i>
+                                <span class="text-sm">工作类</span>
+                            </div>
+                            <div class="dream-category flex items-center p-3 rounded-lg border border-cyber-primary/30 hover:border-cyber-primary transition-all duration-300 cursor-pointer">
+                                <i class="fa fa-car text-cyber-primary mr-3"></i>
+                                <span class="text-sm">交通工具类</span>
+                            </div>
+                            <div class="dream-category flex items-center p-3 rounded-lg border border-cyber-primary/30 hover:border-cyber-primary transition-all duration-300 cursor-pointer">
+                                <i class="fa fa-tree text-green-400 mr-3"></i>
+                                <span class="text-sm">自然类</span>
+                            </div>
+                            <div class="dream-category flex items-center p-3 rounded-lg border border-cyber-primary/30 hover:border-cyber-primary transition-all duration-300 cursor-pointer">
+                                <i class="fa fa-graduation-cap text-blue-400 mr-3"></i>
+                                <span class="text-sm">考试类</span>
+                            </div>
+                            <div class="dream-category flex items-center p-3 rounded-lg border border-cyber-primary/30 hover:border-cyber-primary transition-all duration-300 cursor-pointer">
+                                <i class="fa fa-medkit text-red-400 mr-3"></i>
+                                <span class="text-sm">健康类</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="glass rounded-xl p-4 border border-cyber-secondary/30">
+                        <h2 class="text-base font-semibold mb-3 text-cyber-secondary">梦境记录</h2>
+                        <p class="text-sm text-cyber-light mb-4">记录你的梦境，AI将为你提供深度解析和未来预测。</p>
+                        <button class="w-full py-3 rounded-lg bg-cyber-secondary/20 text-cyber-secondary text-sm hover:bg-cyber-secondary/30 transition-all duration-300">
+                            记录我的梦境
+                        </button>
+                    </div>
+                </main>
+            </div>
+
+            <!-- 匹配测试页面 -->
+            <div id="match-test-page" class="page h-full flex flex-col hidden">
+                <!-- 头部 -->
+                <header class="p-4 border-b border-cyber-primary/30 flex items-center">
+                    <button id="back-from-match-test" class="text-cyber-primary mr-4">
+                        <i class="fa fa-arrow-left"></i>
+                    </button>
+                    <h1 class="text-lg font-bold text-cyber-primary">缘分匹配</h1>
+                </header>
+
+                <!-- 主要内容 -->
+                <main class="flex-1 p-4 overflow-y-auto bg-grid">
+                    <div class="glass rounded-xl p-4 border border-cyber-primary/30 mb-6">
+                        <h2 class="text-base font-semibold mb-4 text-cyber-primary">姓名匹配</h2>
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-xs text-cyber-light mb-1">你的姓名</label>
+                                <input type="text" placeholder="请输入你的姓名" class="w-full bg-cyber-darker/50 border border-cyber-primary/30 rounded-lg p-3 text-sm focus:outline-none focus:border-cyber-primary transition-all duration-300">
+                            </div>
+                            <div>
+                                <label class="block text-xs text-cyber-light mb-1">对方姓名</label>
+                                <input type="text" placeholder="请输入对方姓名" class="w-full bg-cyber-darker/50 border border-cyber-primary/30 rounded-lg p-3 text-sm focus:outline-none focus:border-cyber-primary transition-all duration-300">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="glass rounded-xl p-4 border border-cyber-accent/30 mb-6">
+                        <h2 class="text-base font-semibold mb-4 text-cyber-accent">星座匹配</h2>
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-xs text-cyber-light mb-1">你的星座</label>
+                                <select class="w-full bg-cyber-darker/50 border border-cyber-primary/30 rounded-lg p-3 text-sm focus:outline-none focus:border-cyber-primary transition-all duration-300 appearance-none">
+                                    <option value="">请选择</option>
+                                    <option value="aries">白羊座</option>
+                                    <option value="taurus">金牛座</option>
+                                    <option value="gemini">双子座</option>
+                                    <option value="cancer">巨蟹座</option>
+                                    <option value="leo">狮子座</option>
+                                    <option value="virgo">处女座</option>
+                                    <option value="libra">天秤座</option>
+                                    <option value="scorpio">天蝎座</option>
+                                    <option value="sagittarius">射手座</option>
+                                    <option value="capricorn">摩羯座</option>
+                                    <option value="aquarius">水瓶座</option>
+                                    <option value="pisces">双鱼座</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs text-cyber-light mb-1">对方星座</label>
+                                <select class="w-full bg-cyber-darker/50 border border-cyber-primary/30 rounded-lg p-3 text-sm focus:outline-none focus:border-cyber-primary transition-all duration-300 appearance-none">
+                                    <option value="">请选择</option>
+                                    <option value="aries">白羊座</option>
+                                    <option value="taurus">金牛座</option>
+                                    <option value="gemini">双子座</option>
+                                    <option value="cancer">巨蟹座</option>
+                                    <option value="leo">狮子座</option>
+                                    <option value="virgo">处女座</option>
+                                    <option value="libra">天秤座</option>
+                                    <option value="scorpio">天蝎座</option>
+                                    <option value="sagittarius">射手座</option>
+                                    <option value="capricorn">摩羯座</option>
+                                    <option value="aquarius">水瓶座</option>
+                                    <option value="pisces">双鱼座</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button class="w-full py-3 rounded-lg bg-gradient-to-r from-cyber-primary to-cyber-secondary text-cyber-darker font-medium hover:shadow-cyber transition-all duration-300">
+                        开始匹配
+                    </button>
+                </main>
+            </div>
+        </div>
+        <!-- 底部导航栏 - 在所有页面中显示 -->
+        <footer class="tab-bar glass border-t border-cyber-primary/30 flex items-center justify-around">
+            <button id="nav-home" class="nav-item flex flex-col items-center justify-center text-cyber-primary">
+                <i class="fa fa-home"></i>
+                <span class="text-xs mt-1">首页</span>
+            </button>
+            <button id="nav-discover" class="nav-item flex flex-col items-center justify-center text-cyber-light">
+                <i class="fa fa-compass"></i>
+                <span class="text-xs mt-1">发现</span>
+            </button>
+            <button id="nav-history" class="nav-item flex flex-col items-center justify-center text-cyber-light">
+                <i class="fa fa-history"></i>
+                <span class="text-xs mt-1">历史</span>
+            </button>
+            <button id="nav-profile" class="nav-item flex flex-col items-center justify-center text-cyber-light">
+                <i class="fa fa-user"></i>
+                <span class="text-xs mt-1">我的</span>
+            </button>
+        </footer>
+
+        <!-- 底部指示器 -->
+        <div class="bottom-indicator glass flex items-center justify-center">
+            <div class="w-16 h-1.5 rounded-full bg-cyber-light/30"></div>
+        </div>
+    </div>
+
+    <script>
+        // 页面切换逻辑
+        document.addEventListener('DOMContentLoaded', function() {
+            // 获取所有页面元素
+            const homePage = document.getElementById('home-page');
+            const loginPage = document.getElementById('login-page');
+            const todayFortunePage = document.getElementById('today-fortune-page');
+            const personalityPage = document.getElementById('personality-page');
+            const personalityTestPage = document.getElementById('personality-test-page');
+            const personalityResultPage = document.getElementById('personality-result-page');
+            const loveFortunePage = document.getElementById('love-fortune-page');
+            const careerFortunePage = document.getElementById('career-fortune-page');
+            const discoverPage = document.getElementById('discover-page');
+            const historyPage = document.getElementById('history-page');
+            const profilePage = document.getElementById('profile-page');
+            const subscriptionPage = document.getElementById('subscription-page');
+            const settingsPage = document.getElementById('settings-page');
+            const aboutPage = document.getElementById('about-page');
+            const agreementPage = document.getElementById('agreement-page');
+            const privacyPage = document.getElementById('privacy-page');
+            const zodiacPage = document.getElementById('zodiac-page');
+            const dreamPage = document.getElementById('dream-page');
+            const matchTestPage = document.getElementById('match-test-page');
+            const shareModal = document.getElementById('share-modal');
+
+            // 页面切换函数
+            function showPage(page) {
+                // 隐藏所有页面
+                const pages = document.querySelectorAll('.page');
+                pages.forEach(p => p.classList.add('hidden'));
+                
+                // 显示指定页面
+                if (page) {
+                    page.classList.remove('hidden');
+                }
+            }
+
+            // 初始化显示首页
+            showPage(homePage);
+
+            // 服务卡片点击事件
+            const serviceCards = document.querySelectorAll('.service-card');
+            serviceCards.forEach(card => {
+                card.addEventListener('click', function() {
+                    const title = this.querySelector('h3').textContent;
+                    if (title === '今日运势') {
+                        showPage(todayFortunePage);
+                    } else if (title === '性格分析') {
+                        showPage(personalityPage);
+                    } else if (title === '爱情运势') {
+                        showPage(loveFortunePage);
+                    } else if (title === '事业财运') {
+                        showPage(careerFortunePage);
+                    }
+                });
+            });
+
+            // 底部导航栏点击事件
+            function updateNavHighlight(activeNavId) {
+                const navItems = document.querySelectorAll('.nav-item');
+                navItems.forEach(item => {
+                    item.classList.remove('text-cyber-primary');
+                    item.classList.add('text-cyber-light');
+                });
+                const activeNav = document.getElementById(activeNavId);
+                if (activeNav) {
+                    activeNav.classList.remove('text-cyber-light');
+                    activeNav.classList.add('text-cyber-primary');
+                }
+            }
+
+            document.getElementById('nav-home')?.addEventListener('click', () => {
+                showPage(homePage);
+                updateNavHighlight('nav-home');
+            });
+
+            document.getElementById('nav-discover')?.addEventListener('click', () => {
+                showPage(discoverPage);
+                updateNavHighlight('nav-discover');
+            });
+
+            document.getElementById('nav-history')?.addEventListener('click', () => {
+                showPage(historyPage);
+                updateNavHighlight('nav-history');
+            });
+
+            document.getElementById('nav-profile')?.addEventListener('click', () => {
+                showPage(profilePage);
+                updateNavHighlight('nav-profile');
+            });
+
+            // 登录相关
+            document.getElementById('login-btn')?.addEventListener('click', () => {
+                showPage(loginPage);
+            });
+            document.getElementById('back-from-login')?.addEventListener('click', () => {
+                showPage(homePage);
+            });
+            document.getElementById('login-from-profile')?.addEventListener('click', () => {
+                showPage(loginPage);
+            });
+            
+            // 登录页面交互优化
+            const phoneInput = document.getElementById('phone-input');
+            const codeInput = document.getElementById('code-input');
+            const getCodeBtn = document.getElementById('get-code-btn');
+            const submitLoginBtn = document.getElementById('submit-login-btn');
+            
+            // 手机号输入验证
+            if (phoneInput) {
+                phoneInput.addEventListener('input', function() {
+                    // 只允许输入数字
+                    this.value = this.value.replace(/\D/g, '');
+                    // 限制为11位
+                    if (this.value.length > 11) {
+                        this.value = this.value.slice(0, 11);
+                    }
+                });
+            }
+            
+            // 验证码输入验证
+            if (codeInput) {
+                codeInput.addEventListener('input', function() {
+                    // 只允许输入数字
+                    this.value = this.value.replace(/\D/g, '');
+                    // 限制为6位
+                    if (this.value.length > 6) {
+                        this.value = this.value.slice(0, 6);
+                    }
+                });
+            }
+            
+            // 获取验证码按钮点击事件
+            if (getCodeBtn) {
+                getCodeBtn.addEventListener('click', function() {
+                    if (!phoneInput || phoneInput.value.length !== 11) {
+                        // 添加抖动动画提示
+                        if (phoneInput) {
+                            phoneInput.classList.add('animate-shake');
+                            setTimeout(() => phoneInput.classList.remove('animate-shake'), 500);
+                        }
+                        return;
+                    }
+                    
+                    // 禁用按钮并开始倒计时
+                    let countdown = 60;
+                    getCodeBtn.disabled = true;
+                    getCodeBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                    getCodeBtn.classList.remove('hover:bg-cyber-primary/30');
+                    getCodeBtn.textContent = `${countdown}秒后重新获取`;
+                    
+                    const timer = setInterval(() => {
+                        countdown--;
+                        getCodeBtn.textContent = `${countdown}秒后重新获取`;
+                        if (countdown <= 0) {
+                            clearInterval(timer);
+                            getCodeBtn.disabled = false;
+                            getCodeBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                            getCodeBtn.classList.add('hover:bg-cyber-primary/30');
+                            getCodeBtn.textContent = '获取验证码';
+                        }
+                    }, 1000);
+                });
+            }
+            
+            // 登录按钮点击事件
+            if (submitLoginBtn) {
+                submitLoginBtn.addEventListener('click', function() {
+                    let isValid = true;
+                    
+                    if (!phoneInput || phoneInput.value.length !== 11) {
+                        // 添加抖动动画提示
+                        if (phoneInput) {
+                            phoneInput.classList.add('animate-shake');
+                            setTimeout(() => phoneInput.classList.remove('animate-shake'), 500);
+                        }
+                        isValid = false;
+                    }
+                    
+                    if (!codeInput || codeInput.value.length !== 6) {
+                        // 添加抖动动画提示
+                        if (codeInput) {
+                            codeInput.classList.add('animate-shake');
+                            setTimeout(() => codeInput.classList.remove('animate-shake'), 500);
+                        }
+                        isValid = false;
+                    }
+                    
+                    if (!isValid) return;
+                    
+                    // 登录成功动画效果
+                    submitLoginBtn.classList.add('animate-pulse');
+                    setTimeout(() => {
+                        submitLoginBtn.classList.remove('animate-pulse');
+                        // 模拟登录成功，返回首页
+                        showPage(homePage);
+                        // 显示成功提示
+                        const toast = document.createElement('div');
+                        toast.className = 'fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-cyber-primary text-black px-4 py-2 rounded-lg shadow-lg z-50';
+                        toast.textContent = '登录成功！';
+                        document.body.appendChild(toast);
+                        setTimeout(() => {
+                            toast.classList.add('opacity-0', 'transition-opacity', 'duration-500');
+                            setTimeout(() => toast.remove(), 500);
+                        }, 2000);
+                        
+                        // 重置输入框
+                        if (phoneInput) phoneInput.value = '';
+                        if (codeInput) codeInput.value = '';
+                    }, 1000);
+                });
+            }
+
+            // 运势相关
+            document.getElementById('back-from-today-fortune')?.addEventListener('click', () => {
+                showPage(homePage);
+            });
+            document.getElementById('love-fortune-btn')?.addEventListener('click', () => {
+                showPage(loveFortunePage);
+            });
+            document.getElementById('back-from-love-fortune')?.addEventListener('click', () => {
+                showPage(todayFortunePage);
+            });
+            document.getElementById('career-fortune-btn')?.addEventListener('click', () => {
+                showPage(careerFortunePage);
+            });
+            document.getElementById('back-from-career-fortune')?.addEventListener('click', () => {
+                showPage(todayFortunePage);
+            });
+
+            // 性格分析相关
+            document.getElementById('back-from-personality')?.addEventListener('click', () => {
+                showPage(homePage);
+            });
+            document.getElementById('start-personality-test')?.addEventListener('click', () => {
+                showPage(personalityTestPage);
+            });
+            document.getElementById('back-from-test')?.addEventListener('click', () => {
+                showPage(personalityPage);
+            });
+            document.getElementById('next-question')?.addEventListener('click', () => {
+                showPage(personalityResultPage);
+            });
+            document.getElementById('back-from-result')?.addEventListener('click', () => {
+                showPage(personalityPage);
+            });
+
+            // 订阅页面
+            document.getElementById('go-to-subscription')?.addEventListener('click', () => {
+                showPage(subscriptionPage);
+            });
+            document.getElementById('back-from-subscription')?.addEventListener('click', () => {
+                showPage(homePage);
+            });
+
+            // 历史页面
+            document.getElementById('go-to-home-from-history')?.addEventListener('click', () => {
+                showPage(homePage);
+            });
+
+            // 设置相关
+            document.getElementById('go-to-settings')?.addEventListener('click', () => {
+                showPage(settingsPage);
+            });
+            document.getElementById('back-from-settings')?.addEventListener('click', () => {
+                showPage(profilePage);
+            });
+            document.getElementById('privacy-policy-btn')?.addEventListener('click', () => {
+                showPage(privacyPage);
+            });
+            document.getElementById('back-from-privacy')?.addEventListener('click', () => {
+                showPage(settingsPage);
+            });
+
+            // 星座运势页面返回按钮
+            document.getElementById('back-from-zodiac')?.addEventListener('click', () => {
+                showPage(discoverPage);
+            });
+
+            // 解梦页面返回按钮
+            document.getElementById('back-from-dream')?.addEventListener('click', () => {
+                showPage(discoverPage);
+            });
+
+            // 匹配测试页面返回按钮
+            document.getElementById('back-from-match-test')?.addEventListener('click', () => {
+                showPage(discoverPage);
+            });
+
+            // 发现页面卡片点击事件
+            document.getElementById('zodiac-card')?.addEventListener('click', () => {
+                showPage(zodiacPage);
+            });
+            document.getElementById('dream-card')?.addEventListener('click', () => {
+                showPage(dreamPage);
+            });
+            document.getElementById('match-card')?.addEventListener('click', () => {
+                showPage(matchTestPage);
+            });
+
+            // 关于我们和用户协议
+            document.getElementById('go-to-about')?.addEventListener('click', () => {
+                showPage(aboutPage);
+            });
+            document.getElementById('back-from-about')?.addEventListener('click', () => {
+                showPage(profilePage);
+            });
+            document.getElementById('go-to-agreement')?.addEventListener('click', () => {
+                showPage(agreementPage);
+            });
+            document.getElementById('back-from-agreement')?.addEventListener('click', () => {
+                showPage(profilePage);
+            });
+
+            // 分享功能
+            document.getElementById('share-result')?.addEventListener('click', () => {
+                if (shareModal) shareModal.classList.remove('hidden');
+            });
+            document.getElementById('close-share-modal')?.addEventListener('click', () => {
+                if (shareModal) shareModal.classList.add('hidden');
+            });
+
+            // 添加扫描线效果
+            const appContainer = document.querySelector('.app-container');
+            const scanLine = document.createElement('div');
+            scanLine.className = 'scan-line fixed top-0 left-0 w-full h-full pointer-events-none z-10';
+            appContainer.appendChild(scanLine);
+        });
+    </script>
+</body>
+</html>
